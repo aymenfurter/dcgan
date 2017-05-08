@@ -129,11 +129,8 @@ def main(_):
                 # batch_z = np.random.uniform(low=-1, high=1, size=(FLAGS.batch_size, z_dim)).astype(np.float32)
             batch_z = np.random.normal(loc=0.0, scale=1.0, size=(FLAGS.sample_size, z_dim)).astype(np.float32)
             start_time = time.time()
-            # updates the discriminator
-            # batch_images = array(batch_images).reshape(1, 64,64,3)
-            
-            batch_images = np.expand_dims(batch_images, axis=4);
-            #sample_images = np.expand_dims(sample_images, axis=4);
+            # updates the discriminator                        
+            batch_images = np.expand_dims(batch_images, axis=4);           
 
             errD, _ = sess.run([d_loss, d_optim], feed_dict={z: batch_z, real_images: batch_images })
             # updates the generator, run generator twice to make sure that d_loss does not go to zero (difference from paper)
