@@ -1,3 +1,5 @@
+# Greyscale Port of DCGAN in TensorFlow by zsdonghao (https://github.com/zsdonghao)
+
 # DCGAN in TensorFlow
 
 TensorFlow / TensorLayer implementation of [Deep Convolutional Generative Adversarial Networks](http://arxiv.org/abs/1511.06434) which is a stabilize Generative Adversarial Networks.

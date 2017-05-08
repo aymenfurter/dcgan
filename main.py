@@ -24,20 +24,20 @@ flags = tf.app.flags
 flags.DEFINE_integer("epoch", 25, "Epoch to train [25]")
 flags.DEFINE_float("learning_rate", 0.0002, "Learning rate of for adam [0.0002]")
 flags.DEFINE_float("beta1", 0.5, "Momentum term of adam [0.5]")
-flags.DEFINE_integer("train_size", np.inf, "The size of train images [np.inf]")
+flags.DEFINE_integer("train_size", 324, "The size of train images [np.inf]")
 flags.DEFINE_integer("batch_size", 64, "The number of batch images [64]")
 flags.DEFINE_integer("image_size", 108, "The size of image to use (will be center cropped) [108]")
 flags.DEFINE_integer("output_size", 64, "The size of the output images to produce [64]")
 flags.DEFINE_integer("sample_size", 64, "The number of sample images [64]")
-flags.DEFINE_integer("c_dim", 3, "Dimension of image color. [3]")
-flags.DEFINE_integer("sample_step", 500, "The interval of generating sample. [500]")
-flags.DEFINE_integer("save_step", 500, "The interval of saveing checkpoints. [500]")
-flags.DEFINE_string("dataset", "celebA", "The name of dataset [celebA, mnist, lsun]")
+flags.DEFINE_integer("c_dim", 1, "Dimension of image color. [3]")
+flags.DEFINE_integer("sample_step", 50, "The interval of generating sample. [500]")
+flags.DEFINE_integer("save_step", 50, "The interval of saveing checkpoints. [500]")
+flags.DEFINE_string("dataset", "test .", "The name of dataset [celebA, mnist, lsun]")
 flags.DEFINE_string("checkpoint_dir", "checkpoint", "Directory name to save the checkpoints [checkpoint]")
 flags.DEFINE_string("sample_dir", "samples", "Directory name to save the image samples [samples]")
-flags.DEFINE_boolean("is_train", False, "True for training, False for testing [False]")
+flags.DEFINE_boolean("is_train", True, "True for training, False for testing [False]")
 flags.DEFINE_boolean("is_crop", True, "True for training, False for testing [False]")
-flags.DEFINE_boolean("visualize", False, "True for visualizing, False for nothing [False]")
+flags.DEFINE_boolean("visualize", True, "True for visualizing, False for nothing [False]")
 FLAGS = flags.FLAGS
 
 def main(_):
@@ -112,7 +112,7 @@ def main(_):
 
         ## update sample files based on shuffled data
         sample_files = data_files[0:FLAGS.sample_size]
-        sample = [get_image(sample_file, FLAGS.image_size, is_crop=FLAGS.is_crop, resize_w=FLAGS.output_size, is_grayscale = 0) for sample_file in sample_files]
+        sample = [get_image(sample_file, FLAGS.image_size, is_crop=FLAGS.is_crop, resize_w=FLAGS.output_size, is_grayscale = 1) for sample_file in sample_files]
         sample_images = np.array(sample).astype(np.float32)
         print("[*] Sample images updated!")
 
@@ -123,12 +123,18 @@ def main(_):
             batch_files = data_files[idx*FLAGS.batch_size:(idx+1)*FLAGS.batch_size]
             ## get real images
             # more image augmentation functions in http://tensorlayer.readthedocs.io/en/latest/modules/prepro.html
-            batch = [get_image(batch_file, FLAGS.image_size, is_crop=FLAGS.is_crop, resize_w=FLAGS.output_size, is_grayscale = 0) for batch_file in batch_files]
+            batch = [get_image(batch_file, FLAGS.image_size, is_crop=FLAGS.is_crop, resize_w=FLAGS.output_size, is_grayscale = 1) for batch_file in batch_files]
+            print(batch_file)
             batch_images = np.array(batch).astype(np.float32)
                 # batch_z = np.random.uniform(low=-1, high=1, size=(FLAGS.batch_size, z_dim)).astype(np.float32)
             batch_z = np.random.normal(loc=0.0, scale=1.0, size=(FLAGS.sample_size, z_dim)).astype(np.float32)
             start_time = time.time()
             # updates the discriminator
+            # batch_images = array(batch_images).reshape(1, 64,64,3)
+            
+            batch_images = np.expand_dims(batch_images, axis=4);
+            #sample_images = np.expand_dims(sample_images, axis=4);
+
             errD, _ = sess.run([d_loss, d_optim], feed_dict={z: batch_z, real_images: batch_images })
             # updates the generator, run generator twice to make sure that d_loss does not go to zero (difference from paper)
             for _ in range(2):
@@ -141,6 +147,7 @@ def main(_):
             iter_counter += 1
             if np.mod(iter_counter, FLAGS.sample_step) == 0:
                 # generate and visualize generated images
+                sample_images = np.expand_dims(sample_images, axis=4);
                 img, errD, errG = sess.run([net_g2.outputs, d_loss, g_loss], feed_dict={z : sample_seed, real_images: sample_images})
                 '''
                 img255 = (np.array(img) + 1) / 2 * 255
@@ -154,7 +161,7 @@ def main(_):
 
             if np.mod(iter_counter, FLAGS.save_step) == 0:
                 # save current network parameters
-                print("[*] Saving checkpoints...")
+                print("[*] Saving checkpoints...")                
                 img, errD, errG = sess.run([net_g2.outputs, d_loss, g_loss], feed_dict={z : sample_seed, real_images: sample_images})
                 model_dir = "%s_%s_%s" % (FLAGS.dataset, FLAGS.batch_size, FLAGS.output_size)
                 save_dir = os.path.join(FLAGS.checkpoint_dir, model_dir)
@@ -175,3 +182,5 @@ def main(_):
 
 if __name__ == '__main__':
     tf.app.run()
+
+
